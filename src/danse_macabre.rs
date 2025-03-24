@@ -1,0 +1,770 @@
+use std::{collections::{BTreeMap, BTreeSet}, ffi::OsStr, fmt::Display, fs::{self, File}, path::PathBuf};
+use std::io::Read;
+use std::str::FromStr;
+
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DanseMacabreCardKey {
+    Creation,
+    Temptation,
+    Expulsion,
+    ConsequencesoftheFall,
+    Cemetery,
+    Pope,
+    Emperor,
+    King,
+    Cardinal,
+    Empress,
+    Queen,
+    Bishop,
+    Duke,
+    Abbot,
+    Abbess,
+    Nobleman,
+    Canon,
+    Judge,
+    Advocate,
+    Senator,
+    Preacher,
+    Priest,
+    MendicantFriar,
+    Nun,
+    OldWoman,
+    Physician,
+    Astrologer,
+    RichMan,
+    Merchant,
+    Shipman,
+    Knight,
+    Count,
+    OldMan,
+    Countess,
+    NobleLady,
+    Duchess,
+    Pedlar,
+    Ploughman,
+    YoungChild,
+    LastJudgment,
+    EscutcheonOfDeath,
+    Soldier,
+    Gamester,
+    Drunkard,
+    Fool,
+    Robber,
+    BlindMan,
+    Waggoner,
+    Beggar
+}
+
+impl FromStr for DanseMacabreCardKey {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = 
+            if s.len() > 52 {
+                &s[..52]
+            } else {
+                s
+            };
+        let key = match &s.to_ascii_lowercase()[..] {
+            "creation" => Some(DanseMacabreCardKey::Creation),
+            "temptation" => Some(DanseMacabreCardKey::Temptation),
+            "expulsion" => Some(DanseMacabreCardKey::Expulsion),
+            "consequences" | "consequencesofthefall" | "consequences_of_the_fall" => Some(DanseMacabreCardKey::ConsequencesoftheFall),
+            "cemetery" => Some(DanseMacabreCardKey::Cemetery),
+            "pope" => Some(DanseMacabreCardKey::Pope),
+            "emperor" => Some(DanseMacabreCardKey::Emperor),
+            "king" => Some(DanseMacabreCardKey::King),
+            "cardinal" => Some(DanseMacabreCardKey::Cardinal),
+            "empress" => Some(DanseMacabreCardKey::Empress),
+            "queen" => Some(DanseMacabreCardKey::Queen),
+            "bishop" => Some(DanseMacabreCardKey::Bishop),
+            "duke" => Some(DanseMacabreCardKey::Duke),
+            "abbot" => Some(DanseMacabreCardKey::Abbot),
+            "abbess" => Some(DanseMacabreCardKey::Abbess),
+            "nobleman" => Some(DanseMacabreCardKey::Nobleman),
+            "canon" => Some(DanseMacabreCardKey::Canon),
+            "judge" => Some(DanseMacabreCardKey::Judge),
+            "advocate" => Some(DanseMacabreCardKey::Advocate),
+            "senator" => Some(DanseMacabreCardKey::Senator),
+            "preacher" => Some(DanseMacabreCardKey::Preacher),
+            "priest" => Some(DanseMacabreCardKey::Priest),
+            "mendicantfriar" | "mendicant_friar" => Some(DanseMacabreCardKey::MendicantFriar),
+            "nun" => Some(DanseMacabreCardKey::Nun),
+            "oldwoman" | "old_woman" => Some(DanseMacabreCardKey::OldWoman),
+            "physician" => Some(DanseMacabreCardKey::Physician),
+            "astrologer" => Some(DanseMacabreCardKey::Astrologer),
+            "richman" | "rich_man" => Some(DanseMacabreCardKey::RichMan),
+            "merchant" => Some(DanseMacabreCardKey::Merchant),
+            "shipman" => Some(DanseMacabreCardKey::Shipman),
+            "knight" => Some(DanseMacabreCardKey::Knight),
+            "count" => Some(DanseMacabreCardKey::Count),
+            "oldman" | "old_man" => Some(DanseMacabreCardKey::OldMan),
+            "countess" => Some(DanseMacabreCardKey::Countess),
+            "lady" | "noblelady" | "noble_lady" => Some(DanseMacabreCardKey::NobleLady),
+            "duchess" => Some(DanseMacabreCardKey::Duchess),
+            "pedlar" => Some(DanseMacabreCardKey::Pedlar),
+            "ploughman" => Some(DanseMacabreCardKey::Ploughman),
+            "child" | "youngchild" | "young_child" => Some(DanseMacabreCardKey::YoungChild),
+            "judgment" | "lastjudgment" | "last_judgment" => Some(DanseMacabreCardKey::LastJudgment),
+            "escutcheon" | "death" | "escutcheonofdeath" | "escutcheon_of_death" => Some(DanseMacabreCardKey::EscutcheonOfDeath),
+            "soldier" => Some(DanseMacabreCardKey::Soldier),
+            "gamester" => Some(DanseMacabreCardKey::Gamester),
+            "drunkard" => Some(DanseMacabreCardKey::Drunkard),
+            "fool" => Some(DanseMacabreCardKey::Fool),
+            "robber" => Some(DanseMacabreCardKey::Robber),
+            "blindman" | "blind_man" => Some(DanseMacabreCardKey::BlindMan),
+            "waggoner" => Some(DanseMacabreCardKey::Waggoner),
+            "beggar" => Some(DanseMacabreCardKey::Beggar),
+            _ => None
+        };
+        match key {
+            Some(key) => Ok(key),
+            None => Err(()),
+        }
+    }
+}
+
+impl TryFrom<usize> for DanseMacabreCardKey {
+    type Error = ();
+    fn try_from(value: usize) -> Result<DanseMacabreCardKey, Self::Error> {
+        let key = match value {
+            0 => Some(DanseMacabreCardKey::Creation),
+            1 => Some(DanseMacabreCardKey::Temptation),
+            2 => Some(DanseMacabreCardKey::Expulsion),
+            3 => Some(DanseMacabreCardKey::ConsequencesoftheFall),
+            4 => Some(DanseMacabreCardKey::Cemetery),
+            5 => Some(DanseMacabreCardKey::Pope),
+            6 => Some(DanseMacabreCardKey::Emperor),
+            7 => Some(DanseMacabreCardKey::King),
+            8 => Some(DanseMacabreCardKey::Cardinal),
+            9 => Some(DanseMacabreCardKey::Empress),
+            10 => Some(DanseMacabreCardKey::Queen),
+            11 => Some(DanseMacabreCardKey::Bishop),
+            12 => Some(DanseMacabreCardKey::Duke),
+            13 => Some(DanseMacabreCardKey::Abbot),
+            14 => Some(DanseMacabreCardKey::Abbess),
+            15 => Some(DanseMacabreCardKey::Nobleman),
+            16 => Some(DanseMacabreCardKey::Canon),
+            17 => Some(DanseMacabreCardKey::Judge),
+            18 => Some(DanseMacabreCardKey::Advocate),
+            19 => Some(DanseMacabreCardKey::Senator),
+            20 => Some(DanseMacabreCardKey::Preacher),
+            21 => Some(DanseMacabreCardKey::Priest),
+            22 => Some(DanseMacabreCardKey::MendicantFriar),
+            23 => Some(DanseMacabreCardKey::Nun),
+            24 => Some(DanseMacabreCardKey::OldWoman),
+            25 => Some(DanseMacabreCardKey::Physician),
+            26 => Some(DanseMacabreCardKey::Astrologer),
+            27 => Some(DanseMacabreCardKey::RichMan),
+            28 => Some(DanseMacabreCardKey::Merchant),
+            29 => Some(DanseMacabreCardKey::Shipman),
+            30 => Some(DanseMacabreCardKey::Knight),
+            31 => Some(DanseMacabreCardKey::Count),
+            32 => Some(DanseMacabreCardKey::OldMan),
+            33 => Some(DanseMacabreCardKey::Countess),
+            34 => Some(DanseMacabreCardKey::NobleLady),
+            35 => Some(DanseMacabreCardKey::Duchess),
+            36 => Some(DanseMacabreCardKey::Pedlar),
+            37 => Some(DanseMacabreCardKey::Ploughman),
+            38 => Some(DanseMacabreCardKey::YoungChild),
+            39 => Some(DanseMacabreCardKey::LastJudgment),
+            40 => Some(DanseMacabreCardKey::EscutcheonOfDeath),
+            41 => Some(DanseMacabreCardKey::Soldier),
+            42 => Some(DanseMacabreCardKey::Gamester),
+            43 => Some(DanseMacabreCardKey::Drunkard),
+            44 => Some(DanseMacabreCardKey::Fool),
+            45 => Some(DanseMacabreCardKey::Robber),
+            46 => Some(DanseMacabreCardKey::BlindMan),
+            47 => Some(DanseMacabreCardKey::Waggoner),
+            48 => Some(DanseMacabreCardKey::Beggar),
+            _ => None
+        };
+        match key {
+            Some(key) => Ok(key),
+            None => Err(()),
+        }
+    }
+}
+
+fn data() -> String {
+    String::from(r#"Key,Name,German Name,Description,Bible Verse,Quatrain,Bible Verse Eng,Quatrain Eng
+0,Creation,Die Schöpfung aller Ding.,Eve is taken from the side of Adam. ,"Formauit Dominvs Devs hominem de limo terræ, ad imaginē suam creauit illum, masculum & fœminam creauit eos.
+
+Genesis i. & ii","DIEV, Ciel, Mer, Terre, procrea
+De rien demonstrant sa puissance
+Et puis de la terre crea
+L'homme, & la femme a sa semblance.","The Lord God formed man of the dust of the ground, and breathed into his nostrils the breath of life; and man became a living soul.
+
+Genesis 1 & 2","God, Heaven, Sea, and Earth, create
+From nothing, demonstrating His power
+And then from the earth, He created
+Man, and woman in His likeness."
+1,Temptation,"""Adam Eua im Paradyss.""","Eve, having received an apple from the serpent, prompts Adam to gather more.","Quia audisti vocem vxoris tuæ, & comedisti de ligno ex quo preceperam tibi ne comederes, &c.
+
+Genesis iii","ADAM fut par EVE deceu
+Et contre DIEV mangea la pomme,
+Dont tous deux ont la Mort receu,
+Et depuis fut mortel tout homme","Because you have listened to the voice of your wife, and have eaten of the tree of which I commanded you not to eat…
+
+Genesis 3","Adam was deceived by Eve,
+And against God, he ate the apple,
+Because of which both received death,
+And since then, every man has been mortal."
+2,Expulsion,"""Vsstribung Ade Eue.""","Adam and Eve, preceded by Death, playing on a beggar's lyre or hurdy-gurdy, are driven by the angel from Eden.","Emisit eum Dominvs Devs de Paradiso voluptatis, vt operaretur terram de qua sumptus est.
+
+Genesis iii.","DIEV chassa l'homme de plaisir
+Pour uiure au labeur de ses mains:
+Alors la Mort le uint saisir,
+Et consequemment tous humains.","So the Lord God sent him out from the garden of Eden to work the ground from which he was taken.
+
+Genesis 3","God expelled man from paradise
+To live by the toil of his hands:
+Then Death seized him,
+And consequently all humans"
+3,Consequences of the Fall,Adam baut die Erden.,"Adam, aided by Death, tills the earth. Eve, with a distaff, suckles Cain in the background.","Maledicta terra in opere tuo, in laboribus comedes cunctis diebus vitæ
+tuæ, donec reuertaris, &c.
+
+Genesis iii.","Mauldicte en ton labeur la terre.
+En labeur ta uie useras,
+Iusques que la Mort te soubterre.
+Toy pouldre en pouldre tourneras.","Cursed is the ground because of you; in toil you shall eat of it all the days of your life…
+
+Genesis 3","Cursed be the earth in your toil.
+In labor shall you spend your life,
+Until Death buries you.
+You will turn from dust to dust."
+4,Cemetery,Gebein aller Menschen.,"A crowd of skeletons, playing on horns, trumpets, and the like, summon mankind to the grave.","Væ væ væ habitantibus in terra.
+
+Apocalypsis viii.
+
+
+Cuncta in quibus spiraculum vitæ est, mortua sunt.
+
+Genesis vii.","Malheureux qui uiuez au monde
+Tousiours remplis d'aduersitez,
+Pour quelque bien qui uous abonde,
+Serez tous de Mort uisitez.","Woe, woe, woe to the inhabitants of the earth.
+
+Apocalypse 8
+
+Everything in which the breath of life is, is dead.
+
+Genesis 7","Unhappy are those who live in the world,
+Always filled with adversities,
+No matter how much wealth you have,
+You will all be visited by death."
+5,Pope,Der Päpst.,"The Pope (Leo X.) with Death at his side, crowns an Emperor, who kisses his foot. Another Death, in a cardinal's hat, is among the assistants.","Moriatur sacerdos magnus.
+
+Iosve xx.
+
+Et episcopatum eius accipiat alter.
+
+Psalmista cviii.","Qui te cuydes immortel estre
+Par Mort seras tost depesché,
+Et combien que tu soys grand prebstre,
+Vng aultre aura ton Euesché.","Let the high priest die.
+
+Joshua 20
+
+And let another take his office.
+
+Psalm 108","Whoever thinks themselves immortal,
+Will soon be dispatched by death,
+And even if you are a high priest,
+Another will have your bishopric."
+6,Emperor,Der Kaiser.,The Emperor (Maximilian I.) rates his minister for injustice to a suitor. But even in the act Death discrowns him.,"Dispone domui tuæ, morieris enim tu, & non viues.
+
+Isaiæ xxxviii.
+
+Ibi morieris, & ibi erit currus gloriæ tuæ.
+
+Isaiæ xxii.","De ta maison disposeras
+Comme de ton bien transitoire,
+Car là ou mort reposeras,
+Seront les chariotz de ta gloire.","Set your house in order, for you shall die, you shall not recover.
+
+Isaiah 38
+
+There you shall die, and there shall be your glorious chariots.
+
+Isaiah 22","You will dispose of your house
+As of your passing wealth,
+Because where you will rest in death,
+There will be the chariots of your glory."
+7,King,Der König.," The King (Francis I.) sits at feast under a baldachin sprinkled with fleurs-de-lis. Death, as a cup-bearer, pours his last draught.","Sicut & rex hodie est, & cras morietur, nemo enim ex regibus aliud habuit.
+
+Ecclesiastici x. ","Ainsi qu'auiourdhuy il est Roy,
+Demain sera en tombe close.
+Car Roy aulcun de son arroy
+N'a sceu emporter aultre chose.","Like the king today, tomorrow he will die, for no king has anything different.
+
+Ecclesiastes 10","As today he is a king,
+Tomorrow he will be in a closed tomb.
+For no king of his lineage
+Could carry away anything else."
+8,Cardinal,Der Cardinal.,"Death lifts off the Cardinal's hat as he is handing a letter of indulgence to a rich man. Luther's opponent, Cardinal Cajetan, is supposed to be represented.","Væ qui iustificatis impium pro muneribus, & iustitiam iusti aufertis ab eo.
+
+Esaiæ v.","Mal pour uous qui iustifiez
+L'inhumain, & plain de malice
+Et par dons le sanctifiez,
+Ostant au iuste sa iustice.","Woe to those who justify the wicked for a bribe, and take away justice from the righteous.
+
+Isaiah 5","Woe to you who justify
+The inhuman and full of malice,
+And by gifts sanctify him,
+Taking away justice from the righteous."
+9,Empress,Die Kaiserinn.,"The Empress, walking with her women, is intercepted by a female Death, who conducts her to an open grave.","Gradientes in superbia potest Deus humiliare.
+
+Danie iiii. ","Qui marchez en pompe superbe
+La Mort vng iour uous pliera.
+Cõme soubz uoz piedz ployez l'herbe
+Ainsi uous humiliera.","Those who walk in pride, God is able to humble.
+
+Daniel 4","You who walk in proud pomp,
+Death will one day humble you.
+Just as grass bends beneath your feet,
+So shall it humble you."
+10,Queen,Die Königinn.,"Death, in the guise of a court-jester, drags away the Queen as she is leaving her palace.","Mulieres opulentæ surgite, & audite vocem meam. Post dies, & annum, & vos conturbemini.
+
+Isaiæ xxxii.","Leuez uous dames opulentes.
+Ouyez la uoix des trespassez.
+Apres maintz ans & iours passez,
+Serez troublées & doulentes.","Rich women, rise up and hear my voice. In a year and some days you will be troubled.
+
+Isaiah 32","Rise, opulent ladies,
+Hear the voices of the departed.
+After many years and days passed,
+You will be troubled and sorrowful."
+11,Bishop,Der Bischof.,"The sun is setting, and Death leads the aged Bishop from the sorrowing shepherds of his flock.","Percutiam pastorem, & dispergentur oues.
+
+xxvi. Mar. xiiii.","Le pasteur aussi frapperay,
+Mitres & crosses renuersées.
+Et lors quand ie l'attrapperay,
+Seront ses brebis dispersées.","I will strike the shepherd, and the sheep will be scattered.
+
+Mark 14:27","I will also strike the shepherd,
+Mitres and crosses overturned.
+And when I catch him,
+His sheep will be scattered."
+12,Duke,Der Herzog.,"The Duke turns pitilessly from a beggar-woman and her child. Meanwhile Death, fantastically crowned, lays hands on him.","Princeps induetur mœrore. Et quiescere faciam superbiã potentium.
+
+Ezechie. vii.","Vien, prince, auec moy, & delaisse
+Honneurs mondains tost finissantz.
+Seule suis qui, certes, abaisse
+L'orgueil & pompe des puissantz.","The prince will be clothed with sorrow. And I will cause the pride of the mighty to cease.
+
+Ezekiel 7:24","Come, prince, with me, and forsake
+Worldly honors soon ending.
+I alone am the one who truly humbles
+The pride and pomp of the powerful."
+13,Abbot,Der Abt.,"Death, having despoiled the Abbot of mitre and crozier, hales him along unwilling, and threatening his enemy with his breviary.","Ipse morietur. Quia nõ habuit disciplinam, & in multitudine stultitiæ suæ decipietur.
+
+Prover. v.","Il mourra. Car il n'a receu
+En soy aulcune discipline,
+Et au nombre sera deceu
+De folie qui le domine.","He will die because he did not accept discipline, and he will be led astray by his great folly.
+
+Proverbs 5:23","He will die, for he has not accepted
+Any discipline within himself,
+And he will be counted among
+The fools who dominate him with folly."
+14,Abbess,Die Abtissin.,"Death, in a wreath of flags, pulls away the Abbess by her scapulary in sight of a shrieking nun.","Laudaui magis mortuos quàm viuentes.
+
+Eccle. iiii.","I'ay tousiours les mortz plus loué
+Que les uisz, esquelz mal abonde,
+Toucesfoys la Mort ma noué
+Au ranc de ceulx qui sont au monde.","I praised the dead more than the living.
+
+Ecclesiastes 4:2","I have always praised the dead
+More than the living, in whom evil abounds,
+Yet Death has tied me
+To those who are in the world's rank."
+15,Nobleman,Der Edelmann.,Death drags the resisting Nobleman towards a bier in the background.,"Quis est homo qui viuet, & non videbit mortem, eruet animã suam de manu inferi?
+
+Psal. lxxxviii.","Qui est celluy, tant soit grande homme,
+Qui puisse uiure sans mourir?
+Et de la Mort, qui tout assomme,
+Puisse son Ame recourir?","Who is the man who will live and not see death, or save his soul from the power of the grave?
+
+Psalm 89:48","Who is that person, no matter how great,
+Who can live without dying?
+And from Death, which overwhelms all,
+Can rescue their soul?"
+16,"Canon, or Prebendary",Der Domherr.,"The Canon, with his falconer, page, and jester, enters the church door. Death shows him that his sands have run.","Ecce appropinquat hora.
+
+Mat. xxvi.","Tu uas au choeur dire tes heures
+Paiant Dieu pour toy, & ton proche.
+Mais il fault ores que tu meures.
+Voy tu pas l'heure qui approche?","Behold, the hour is at hand.
+
+Matthew 26:45",
+17,Judge,Der Richter.,Death withdraws the Judge's staff as he takes a bribe from a rich suitor.,"Disperdam iudicem de medio eius.
+
+Amos ii.","Du mylieu d'eulx uous osteray
+Iuges corrumpus par presentz.
+Point ne serez de Mort exemptz.
+Car ailleurs uous transporteray.","I will destroy the judge from its midst.
+
+Amos 2:3",
+18,Advocate,Der Fürsprach.,Death comes upon him in the street while he is being feed by a rich client.,"Callidus vidit malum, & abscõdit se innocens, pertransijt, & afflictus est damno.
+
+Prover. xxii.","L'homme cault a ueu la malice
+Pour l'innocent faire obliger,
+Et puis par uoye de iustice
+Est uenu le pauure affliger.","The prudent see danger and hide themselves, but the simple go on and suffer for it.
+
+Proverbs 22:3",
+19,"Counsellor, or Senator",Der Rathsherr.,"The Counsellor, prompted by a devil, is absorbed by a nobleman, and turns unheeding from a poor suppliant. But Death, with glass and spade, is waiting at his feet.","Qui obturat aurem suam ad clamorem pauperis, & ipse clamabit, & non exaudietur.
+
+Prover. xxi.","Les riches conseillez tousiours,
+Et aux pauures clouez l'oreille.
+Vous crierez aux derniers iours,
+Mais Dieu uous fera la pareille.","Whoever closes his ear to the cry of the poor will himself call out and not be answered.
+
+Proverbs 21:13",
+20,Preacher,Der Predicant.,"Death, in a stole, stands in the pulpit behind the fluent Preacher, and prepares to strike him down with a jaw-bone.","Væ qui dicitis malum bonum, & bonum malū, ponentes tenebras lucem, & lucem tenebras, ponentes amarum dulce, & dulce in amarum.
+
+Isaiæ xv.","Mal pour uous qui ainsi osez
+Le mal pour le bien nous blasmer,
+Et le bien pour mal exposez,
+Mettant auec le doulx l'amer.","Woe to those who call evil good and good evil, who put darkness for light and light for darkness, who put bitter for sweet and sweet for bitter.
+
+Isaiah 5:20",
+21,"Priest, or Pastor",Der Pfarrherr.,He carries the host to a sick person. But Death precedes him as his sacristan.,"Sum quidem & ego mortalis homo.
+
+Sap. vii.","Ie porte le sainct sacrement
+Cuidant le mourant secourir,
+Qui mortel suis pareillement.
+Et comme luy me fault mourir.","Indeed, I too am a mortal human.
+
+Wisdom of Solomon 7:1",
+22,Mendicant Friar,Der Mönch.,Death seizes him just as his begging box and bag are filled.,"Sedentes in tenebris, & in vmbra mortis, vinctos in mendicitate.
+
+Psal. cvi.","Toy qui n'as soucy, ny remord
+Sinon de ta mendicité,
+Tu fierras a l'umbre de Mort
+Pour t'ouster de necessité.","Sitting in darkness and in the shadow of death, bound in affliction and iron.
+
+Psalm 107:10",
+23,Nun,Die Nonne.,"The young Nun kneels at the altar, but turns to her lover who plays upon a lute. Death meantime, as a hideous old hag, extinguishes the altar candles.","Est via quæ videtur homini iusta: nouissima autem eius deducunt hominem ad mortem.
+
+Prover. iiii.","Telle uoye aux humains est bonne,
+Et a l'homme tresiuste semble.
+Mais la fin d'elle a l'homme donne,
+La Mort, qui tous pecheurs assemble.","There is a way that seems right to a man, but its end is the way to death.
+
+Proverbs 14:12",
+24,Old Woman,Das Altweib.,"""Melior est mors quam vita"" to the aged woman who crawls gravewards with her bone rosary while Death makes music in the van.","Melior est mors quàm vita.
+
+Eccle. xxx.","En peine ay uescu longuement
+Tant que nay plus de uiure enuie,
+Mais bien ie croy certainement,
+Meilleure la Mort que la uie.","Better is death than life.
+
+Ecclesiasticus 30:17",
+25,Physician,Der Arzt.,"Death brings him a hopeless patient, and bids him cure himself.","Medice, cura teipsum.
+
+Lvcæ iiii.","Tu congnoys bien la maladie
+Pour le patient secourir,
+Et si ne scais teste estourdie,
+Le mal dont tu deburas mourir.","Physician, heal yourself.
+
+Luke 4:23",
+26,Astrologer,Der Astrologe.,He contemplates a pendent sphere. But Death thrusts a skull before his eyes.,"Indica mihi si nosti omnia. Sciebas quòd nasciturus esses, & numerum dierum tuorum noueras?
+
+Iob xxviii.","Tu dis par Amphibologie
+Ce qu'aux aultres doibt aduenir.
+Dy moy donc par Astrologie
+Quand tu deburas a moy uenir?","Tell me if you know all things. Did you know that you would be born, and did you know the number of your days?
+
+Job 38:21",
+27,Rich Man,Der Reichmann.,Death finds him at his pay-table and seizes the money.,"Stulte hac nocte repetunt animam tuam, & quæ parasti cuius erunt?
+
+Lvcæ xii.","Ceste nuict la Mort te prendra,
+Et demain seras enchassé.
+Mais dy moy, fol, a qui uiendra
+Le bien que tu as amassé?","Fool! This night your soul is required of you, and the things you have prepared, whose will they be?
+
+Luke 12:20",
+28,Merchant,Der Kaufmann.,Death arrests him among his newly-arrived bales.,"Qui congregat thesauros mendacij vanus & excors est, & impingetur ad laqueos mortis.
+
+Prover. xxi.","Vain est cil qui amassera
+Grandz biens, & tresors pour mentir,
+La Mort l'en fera repentir.
+Car en ses lacz surpris sera.","Whoever gathers treasures by a lying tongue is a fleeting vapor and a snare of death.
+
+Proverbs 21:6",
+29,Shipman,Der Schiffmann.,"Death breaks the mast of the ship, and the crew are in extremity.","Qui volunt diuites fieri incidunt in laqueum diaboli, & desideria multa, & nociua, quæ mergunt homines in interitum.
+
+I. Ad Timo. vi.","Pour acquerir des biens mondains
+Vous entrez en tentation,
+Qui uous met es perilz soubdains,
+Et uous maine a perdition.","Those who desire to be rich fall into temptation, into a snare of the devil, and into many senseless and harmful desires that plunge people into ruin and destruction.
+
+1 Timothy 6:9",
+30,Knight,Der Ritter.,"Death, in cuirass and chain-mail, runs him through the body.","Subito morientur, & in media nocte turbabuntur populi, & auferent violentum absqe manu.
+
+Iob xxxiiii.","Peuples soubdain s'esleuront
+A lencontre de l'inhumain,
+Et le uiolent osteront
+D'auec eulx sans force de main.","Suddenly they die; at midnight the people are shaken and pass away, and the mighty are taken away without a hand.
+
+Job 34:20",
+31,Count,Der Graf.,"Death, as a peasant with a flail, lifts away his back-piece.","Quoniam cùm interiet non sumet secum omnia, neqe cum eo descẽdet gloria eius.
+
+Psal. xlviii.","Auec soy rien n'emportera,
+Mais qu'une foys la Mort le tombe,
+Rien de sa gloire n'ostera,
+Pour mettre auec soy en sa tombe.","For when he dies he will carry nothing away; his glory will not go down after him.
+
+Psalm 49:17",
+32,Old Man,Der Altmann.,"Death, playing on a dulcimer, leads him into his grave.","Spiritus meus attenuabitur, dies mei breuiabuntur, & solum mihi superest sepulchrum.
+
+Iob xvii.","Mes esperitz sont attendriz,
+Et ma uie s'en ua tout beau.
+Las mes longziours sont amoindriz,
+Plus ne me reste qu'un tombeau.","My spirit is broken, my days are extinguished, the grave awaits me.
+
+Job 17:1",
+33,Countess,Die Grafinn.,Death helps her at her tiring by decorating her with a necklet of dead men's bones.,"Ducunt in bonis dies suos, & in puncto ad inferna descendunt.
+
+Iob xxi.","En biens mõdains leurs iours despendẽt
+En uoluptez, & en tristesse,
+Puis soubdain aux Enfers descendent
+Ou leur ioye passe en tristesse.","They spend their days in prosperity, and in an instant they go down to Sheol.
+
+Job 21:13",
+34,"Noble Lady, or Bride",Die Edelfrau.,"""Me et te sola mors separabit""—says the motto. And Death already dances before her.","Me & te sola mors separabit.
+
+Rvth. i.","Amour qui unyz nous faict uiure,
+En foy noz cueurs preparera,
+Qui long temps ne nous pourra suyure,
+Car la Mort nous separera.","Only death will separate me and you.
+
+Ruth 1:17",
+35,Duchess,Die Herzoginn.,"Death seizes her in bed, while his fellow plays the fiddle.","De lectulo super quem ascendisti non descendes, sed morte morieris.
+
+iiii. Reg. i.","Du lict sus lequel as monté
+Ne descendras a ton plaisir.
+Car Mort t'aura tantost dompté,
+Et en brief te uiendra saisir.","From the bed on which you have gone up, you will not come down, but you will surely die.
+
+2 Kings 1:4",
+36,Pedlar,Der Kramer.,Death stops him on the road with his wares at his back.,"Venite ad me qui onerati estis.
+
+Matth. xi.","Venez, & apres moy marchez
+Vous qui estes par trop charge.
+Cest assez suiuy les marchez:
+Vous serez par moy decharge.","Come to me, all who labor and are heavy laden.
+
+Matthew 11:28",
+37,Ploughman,Der Ackermann.,"Death runs at the horses' sides as the sun sinks, and the furrows are completed.","In sudore vultus tui vesceris pane tuo.
+
+Gene. i.","A la sueur de ton uisaige
+Tu gaigneras ta pauure uie.
+Apres long trauail, & usaige,
+Voicy la Mort qui te conuie.","In the sweat of your face you shall eat bread.
+
+Genesis 3:19",
+38,Young Child,Das Junge Kind.,"As the meagre cottage meal is preparing, Death steals the youngest child.","Homo natus de muliere, breui viuens tempore repletur multis miserijs, qui quasi flos egreditur, & conteritur, & fugit velut vmbra.
+
+Iob xiiii.","Tout homme de la femme yssant
+Remply de misere, & d'encombre,
+Ainsi que fleur tost finissant.
+Sort & puis fuyt comme faict l'umbre.","Man born of a woman, who lives but a short time, is filled with many miseries. He emerges like a flower and withers; he flees like a shadow.
+
+Job 14:1-2",
+39,Last Judgment,Das jüngste Gericht.,"""Omnes stabimus ante tribunal Domini."" (""We shall all stand before the judgment seat of the Lord."")","Omnes stabimus ante tribunal domini.
+
+Roma. xiiii.
+
+Vigilate, & orate, quia nescitis qua hora venturus sit dominus.
+
+Matt. xxiiii.","Deuante le trosne du grand iuge
+Chascun de soy compte rendra
+Pourtant ueillez, qu'il ne uous iuge.
+Car ne scauez quand il uiendra.","We will all stand before the judgment seat of the Lord.
+
+Romans 14:10
+
+Watch and pray, for you do not know at what hour the Lord will come.
+
+Matthew 24:42",
+40,Escutcheon of Death,Die Wappen des Todes.,The supporters represent Holbein and his wife.,"Memorare nouissima, & in æternum non peccabis.
+
+Eccle. Vii.","Si tu ueulx uiure sans peché
+Voy ceste imaige a tous propos,
+Et point ne seras empesché,
+Quand tu t'en iras a repos.","Remember the last things, and you will never sin.
+
+Ecclesiasticus 7:40",
+41,Soldier,Die Soldat.,"Death, armed only with a bone and shield, fights with the Soldier on the field of battle.","Cum fortis armatus custodit atriũ suũ, &c. Si autem fortior eo superueniens vicerit eum, uniuersa eius arma aufert, in quibus confidebat.
+
+Lvcæ xi.","Le sort armé en jeune corps
+Pense auoir seure garnison;
+Mais Mort plus forte, le met hors
+De sa corporelle maison.","When a strong man, fully armed, guards his own palace, his goods are safe. But when one stronger than he attacks him and overpowers him, he takes away his armor in which he trusted.
+
+Luke 11:21-22",
+42,Gamester,Die Spieler.,Death and the Devil seize upon the Gambler at his cards.,"Quid prodest homini, si vniuersum Mundum lucretur, animæ autem suæ detrimentum patiatur?
+
+Matt. xvi.","Que vault à l'homme tout le Monde
+Gaigner d'hazard, & chance experte,
+S'il recoit de sa uie immonde
+Par Mort, irreparable perte?","What does it profit a man if he gains the whole world but forfeits his soul?
+
+Matthew 16:26",
+43,Drunkard,Die Trunkenbold.,Men and women carouse: down the throat of one bloated fellow Death pours the wine.,"Ne inebriemini vino, in quo est luxuria.
+
+Ephes. v.","De vin (auquel est tout exces)
+Ne vous enyurez pour dormir
+Sommeil de Mort qui au deces
+Vous face l'ame, & sang vomir.","Do not get drunk with wine, for that is debauchery.
+
+Ephesians 5:18",
+44,Fool,Die Narr.,"The Fool dances along the highway with Death, who plays the bagpipes.","Quasi agnus lasciuiens, & ignorans, nescit quòd ad vincula stultus trahatur.
+
+Proverb vii.","Le Fol vit en ioye, & deduict
+San scavoir qu'il s'en va mourant,
+Tant qu'à sa fin il est conduict
+Ainsi que l'agneau ignorant.","Like a playful lamb, and ignorant, he does not know that he is heading for the noose of a fool.
+
+Proverbs 7:22",
+45,Robber,Die Räuber.,Death seizes the Robber in the act of pillage.,"Domine, vim patior.
+
+Isaiæ xxxviii.","La foible femme brigandée
+Crie, O seigneur on me fait force.
+Lors de Dieu la mort est mandée,
+Qui les estrangle à dure estorce.","Lord, I suffer violence.
+
+Isaiah 38",
+46,Blind Man,Die Blinder Mann.,Death leads the Blind Man by his staff.,"Cæcus cæcum ducit: & ambo in foueam cadunt.
+
+Matth. xv.","L'aueugle un autre aueugle guide,
+L'un par l'autre en la fosse tombe:
+Car quand plus oultre aller il cuide,
+La Mort l'homme iecte en la tombe.","The blind lead the blind, and both fall into a pit.
+
+Matthew 15:14",
+47,Waggoner,Die Fuhrmann.,"The waggon is overturned; one Death carries off a wheel, the other loosens the fastening of a cask.","Corruit in curru suo.
+
+i Chron. xxii.","Au passage de Mort peruerse
+Raison, chartier tout esperdu,
+Du corps le char, & cheuaux verse,
+Le vin (sang de vie) espandu.","He fell from his chariot.
+
+1 Chronicles 22",
+48,Beggar,Die Bettler.,"The Beggar, lying on straw outside the city, cries in vain for Death.","Miser ego homo! Quis nie liberabit de corpore mortis huius?
+
+Rom. vii.","Qui hors la chair veult en Christ viure
+Ne craint mort, mais dit un mortel,
+Helas, qui me rendra deliure
+Pouure homme de ce corps mortel?","Wretched man that I am! Who will deliver me from this body of death?
+
+Romans 7:24","#)
+}
+
+impl Display for DanseMacabreCardKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+pub struct DanseMacabreCard {
+    pub key: DanseMacabreCardKey,
+    pub german_name: String,
+    pub description: String,
+    pub bible_verse: String, 
+    pub quatrain: String,
+    pub bible_verse_eng: String,
+    pub quatrain_eng: String,
+    pub card_image: Vec<u8>,
+}
+
+fn read_file_bytes(filename: &PathBuf) -> Vec<u8> {
+    let mut f: File = File::open(&filename).unwrap();
+    let metadata = fs::metadata(&filename).unwrap();
+    assert!(metadata.len() < 999000);
+    let mut buffer = vec![0; metadata.len() as usize];
+    f.read(&mut buffer).unwrap();
+    buffer
+}
+
+fn load_deck() -> Vec<Vec<u8>> {
+    let mut deck: Vec<Vec<u8>> = Vec::with_capacity(49);
+    let paths = fs::read_dir("./.content/danse_macabre/").unwrap();
+
+    let mut paths_map: BTreeSet<PathBuf> = BTreeSet::new();
+
+    for dir_entry in paths {
+        let path = dir_entry.unwrap().path();
+        paths_map.insert(path.clone());
+    }
+    
+    let paths_map: Vec<&PathBuf> = paths_map.iter().filter(|path_buf| match path_buf.extension() {
+        Some(extension) if extension.to_ascii_lowercase() == "jpg" => true,
+        _ => false
+    }).collect();
+
+    for card in paths_map {
+        let card = read_file_bytes(card);
+        deck.push(card)
+    }
+
+    deck
+}
+
+pub fn load_danse_macabre() -> Vec<DanseMacabreCard> {
+    let deck = load_deck();
+    assert!(deck.len() == 49);
+
+    let data = data();
+    let data = data.as_bytes();
+
+    let mut csv = csv::Reader::from_reader(data);
+
+    let mut danse_macabre = Vec::with_capacity(deck.len());
+ 
+    for record in csv.records() {
+        let record = match record {
+            Ok(record) => record,
+            Err(e) => panic!("{}", e),
+        };
+
+        /* Key,Name,German Name,Description,Bible Verse,Quatrain,Bible Verse Eng,Quatrain Eng */
+
+        let name = record[1].to_owned();
+        let german_name = record[2].to_string();
+        let description = record[3].to_string();
+        let bible_verse = record[4].to_string();
+        let quatrain = record[5].to_string();
+
+        let (bible_verse_eng, quatrain_eng) =
+            if record.len() == 8 {
+                (record[6].to_string(), record[7].to_string())
+            } else {
+                (String::from(""), String::from(""))
+            };
+
+        let key = DanseMacabreCardKey::from_str(&name[..]).unwrap();
+
+        let card = DanseMacabreCard {
+            key,
+            german_name,
+            description,
+            bible_verse,
+            quatrain,
+            bible_verse_eng,
+            quatrain_eng,
+            card_image: deck[danse_macabre.len()].clone()
+        };
+
+        danse_macabre.push(card);
+    }
+
+    assert!(danse_macabre.len() == 49);
+
+    danse_macabre
+}
+
