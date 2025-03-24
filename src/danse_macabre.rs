@@ -1,9 +1,11 @@
-use std::{collections::{BTreeMap, BTreeSet}, ffi::OsStr, fmt::Display, fs::{self, File}, path::PathBuf};
+use std::{collections::BTreeSet, fmt::Display, fs::{self, File}, path::PathBuf};
 use std::io::Read;
 use std::str::FromStr;
 
+use rand::Rng;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum DanseMacabreCardKey {
     Creation,
     Temptation,
@@ -56,21 +58,15 @@ pub enum DanseMacabreCardKey {
     Beggar
 }
 
-impl FromStr for DanseMacabreCardKey {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s = 
-            if s.len() > 52 {
-                &s[..52]
-            } else {
-                s
-            };
-        let key = match &s.to_ascii_lowercase()[..] {
+impl TryFrom<&str> for DanseMacabreCardKey {
+    type Error = ();
+    
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let key = match &value.to_ascii_lowercase()[..] {
             "creation" => Some(DanseMacabreCardKey::Creation),
             "temptation" => Some(DanseMacabreCardKey::Temptation),
             "expulsion" => Some(DanseMacabreCardKey::Expulsion),
-            "consequences" | "consequencesofthefall" | "consequences_of_the_fall" => Some(DanseMacabreCardKey::ConsequencesoftheFall),
+            "consequences" | "consequencesofthefall" | "consequences_of_the_fall" | "consequences of the fall" => Some(DanseMacabreCardKey::ConsequencesoftheFall),
             "cemetery" => Some(DanseMacabreCardKey::Cemetery),
             "pope" => Some(DanseMacabreCardKey::Pope),
             "emperor" => Some(DanseMacabreCardKey::Emperor),
@@ -83,37 +79,37 @@ impl FromStr for DanseMacabreCardKey {
             "abbot" => Some(DanseMacabreCardKey::Abbot),
             "abbess" => Some(DanseMacabreCardKey::Abbess),
             "nobleman" => Some(DanseMacabreCardKey::Nobleman),
-            "canon" => Some(DanseMacabreCardKey::Canon),
+            "canon" | "prebendary" | "canon, or prebendary" => Some(DanseMacabreCardKey::Canon),
             "judge" => Some(DanseMacabreCardKey::Judge),
             "advocate" => Some(DanseMacabreCardKey::Advocate),
-            "senator" => Some(DanseMacabreCardKey::Senator),
+            "senator" | "counsellor" | "counsellor, or senator" => Some(DanseMacabreCardKey::Senator),
             "preacher" => Some(DanseMacabreCardKey::Preacher),
-            "priest" => Some(DanseMacabreCardKey::Priest),
-            "mendicantfriar" | "mendicant_friar" => Some(DanseMacabreCardKey::MendicantFriar),
+            "priest" | "pastor" | "priest, or pastor" => Some(DanseMacabreCardKey::Priest),
+            "mendicantfriar" | "mendicant_friar" |"mendicant friar" => Some(DanseMacabreCardKey::MendicantFriar),
             "nun" => Some(DanseMacabreCardKey::Nun),
-            "oldwoman" | "old_woman" => Some(DanseMacabreCardKey::OldWoman),
+            "oldwoman" | "old_woman" | "old woman" => Some(DanseMacabreCardKey::OldWoman),
             "physician" => Some(DanseMacabreCardKey::Physician),
             "astrologer" => Some(DanseMacabreCardKey::Astrologer),
-            "richman" | "rich_man" => Some(DanseMacabreCardKey::RichMan),
+            "richman" | "rich_man" | "rich man" => Some(DanseMacabreCardKey::RichMan),
             "merchant" => Some(DanseMacabreCardKey::Merchant),
             "shipman" => Some(DanseMacabreCardKey::Shipman),
             "knight" => Some(DanseMacabreCardKey::Knight),
             "count" => Some(DanseMacabreCardKey::Count),
-            "oldman" | "old_man" => Some(DanseMacabreCardKey::OldMan),
+            "oldman" | "old_man" |"old man" => Some(DanseMacabreCardKey::OldMan),
             "countess" => Some(DanseMacabreCardKey::Countess),
-            "lady" | "noblelady" | "noble_lady" => Some(DanseMacabreCardKey::NobleLady),
+            "lady" | "noblelady" | "noble_lady" | "bride" | "noble lady" | "noble lady, or bride"  => Some(DanseMacabreCardKey::NobleLady),
             "duchess" => Some(DanseMacabreCardKey::Duchess),
             "pedlar" => Some(DanseMacabreCardKey::Pedlar),
             "ploughman" => Some(DanseMacabreCardKey::Ploughman),
-            "child" | "youngchild" | "young_child" => Some(DanseMacabreCardKey::YoungChild),
-            "judgment" | "lastjudgment" | "last_judgment" => Some(DanseMacabreCardKey::LastJudgment),
-            "escutcheon" | "death" | "escutcheonofdeath" | "escutcheon_of_death" => Some(DanseMacabreCardKey::EscutcheonOfDeath),
+            "child" | "youngchild" | "young_child" | "young child" => Some(DanseMacabreCardKey::YoungChild),
+            "judgment" | "lastjudgment" | "last_judgment" | "last judgment"=> Some(DanseMacabreCardKey::LastJudgment),
+            "escutcheon" | "death" | "escutcheonofdeath" | "escutcheon_of_death" | "escutcheon of death" => Some(DanseMacabreCardKey::EscutcheonOfDeath),
             "soldier" => Some(DanseMacabreCardKey::Soldier),
             "gamester" => Some(DanseMacabreCardKey::Gamester),
             "drunkard" => Some(DanseMacabreCardKey::Drunkard),
             "fool" => Some(DanseMacabreCardKey::Fool),
             "robber" => Some(DanseMacabreCardKey::Robber),
-            "blindman" | "blind_man" => Some(DanseMacabreCardKey::BlindMan),
+            "blindman" | "blind_man" |"blind man" => Some(DanseMacabreCardKey::BlindMan),
             "waggoner" => Some(DanseMacabreCardKey::Waggoner),
             "beggar" => Some(DanseMacabreCardKey::Beggar),
             _ => None
@@ -122,6 +118,14 @@ impl FromStr for DanseMacabreCardKey {
             Some(key) => Ok(key),
             None => Err(()),
         }
+    }
+}
+
+impl FromStr for DanseMacabreCardKey {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        DanseMacabreCardKey::try_from(s)
     }
 }
 
@@ -667,7 +671,20 @@ Romans 7:24","#)
 
 impl Display for DanseMacabreCardKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{:?}", self)
+    }
+}
+
+impl DanseMacabreCardKey {
+    pub fn select_random() -> DanseMacabreCardKey {
+        let mut rng = rand::rng();
+        loop {
+            let random = rng.random::<u8>();
+            match random {
+                key @ 0..=48 => return DanseMacabreCardKey::try_from(key as usize).unwrap(),
+                _ => continue,
+            }
+        }
     }
 }
 
@@ -682,8 +699,9 @@ pub struct DanseMacabreCard {
     pub card_image: Vec<u8>,
 }
 
+
 fn read_file_bytes(filename: &PathBuf) -> Vec<u8> {
-    let mut f: File = File::open(&filename).unwrap();
+    let mut f = File::open(&filename).unwrap();
     let metadata = fs::metadata(&filename).unwrap();
     assert!(metadata.len() < 999000);
     let mut buffer = vec![0; metadata.len() as usize];
@@ -699,7 +717,7 @@ fn load_deck() -> Vec<Vec<u8>> {
 
     for dir_entry in paths {
         let path = dir_entry.unwrap().path();
-        paths_map.insert(path.clone());
+        paths_map.insert(path);
     }
     
     let paths_map: Vec<&PathBuf> = paths_map.iter().filter(|path_buf| match path_buf.extension() {
@@ -715,7 +733,7 @@ fn load_deck() -> Vec<Vec<u8>> {
     deck
 }
 
-pub fn load_danse_macabre() -> Vec<DanseMacabreCard> {
+pub fn load_danse_deck() -> Vec<DanseMacabreCard> {
     let deck = load_deck();
     assert!(deck.len() == 49);
 
@@ -747,7 +765,7 @@ pub fn load_danse_macabre() -> Vec<DanseMacabreCard> {
                 (String::from(""), String::from(""))
             };
 
-        let key = DanseMacabreCardKey::from_str(&name[..]).unwrap();
+        let key = DanseMacabreCardKey::try_from(&name[..]).unwrap();
 
         let card = DanseMacabreCard {
             key,

@@ -337,7 +337,7 @@ async fn head(cfg: MatrixCfg) -> Result<(), Box<dyn Error>> {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let tao_deck = load_tao_te_ching();
-    let danse_deck = danse_macabre::load_danse_macabre();
+    let danse_deck = danse_macabre::load_danse_deck();
 
     let homeserver_url = "https://matrix.org".to_owned();
 
