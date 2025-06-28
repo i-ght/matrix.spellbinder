@@ -1,5 +1,9 @@
 use core::sync;
-use std::{error::Error, fs, io, str::FromStr, time::Duration};
+use std::{env, error::Error, fs, io, str::FromStr, time::Duration};
+
+use chrono::{Datelike, Local};
+
+mod maya;
 
 use danse_macabre::{DanseMacabreCard, DanseMacabreCardKey};
 use ruma::{
@@ -35,6 +39,8 @@ type MatrixClient = ruma_client::Client<ruma_client::http_client::HyperNativeTls
 
 use tao_te_ching::load_tao_te_ching;
 use tokio_stream::StreamExt;
+
+use crate::maya::{LongDate, MayaEpoch, RoundDate};
 
 const SYNC_TOKEN_PATH: &str = "./sync_token.json";
 
@@ -148,6 +154,36 @@ async fn send_tao(
     Ok(())
 }
 
+async fn send_maya(
+    client: &MatrixClient,
+    room_id: &OwnedRoomId,
+) -> Result<(), Box<dyn Error>> {
+
+    let now = Local::now();
+    let date = now.date_naive();
+    let long =
+        LongDate::new(
+            MayaEpoch::BC3114,
+            date.year(),
+            date.month0() as i32 + 1,
+            date.day0() as i32 + 1
+        );
+    let round = RoundDate::from(&long);
+    
+    let msg = vec![
+        format!("{:#?}", long),
+        format!("{:#?}", round),
+        format!("{}", round.0.1.detailed_meaning()),
+        format!("{}", round.0.1.meaning()),
+        format!("{}", round.1.1.meaning())
+    ]
+    .join("\n");
+
+    let _response = send_text_msg(client, room_id, &msg[..]).await?;
+
+    Ok(())
+}
+
 async fn send_danse_macabre(
     client: &MatrixClient,
     room_id: &OwnedRoomId,
@@ -210,6 +246,7 @@ fn compute_danse_card(user_input: &str) -> DanseMacabreCardKey {
 enum Cmd {
     Tao(usize),
     DanseMacabre(DanseMacabreCardKey),
+    Maya
 }
 
 fn construct_tao_cmd(user_input: &[&str]) -> Cmd {
@@ -229,6 +266,10 @@ fn construct_danse_cmd(user_input: &[&str]) -> Cmd {
     Cmd::DanseMacabre(card)
 }
 
+fn construct_maya_cmd() -> Cmd {
+    Cmd::Maya
+}
+
 fn try_parse_cmd(cmd: &[&str]) -> Option<Cmd> {
     match cmd {
         ["./tao", user_input @ ..] => Some(construct_tao_cmd(user_input)),
@@ -238,7 +279,7 @@ fn try_parse_cmd(cmd: &[&str]) -> Option<Cmd> {
         | ["./dance", user_input @ ..]
         | ["./death", user_input @ ..]
         | ["./die", user_input @ ..] => Some(construct_danse_cmd(user_input)),
-
+        | ["./maya"] => Some(construct_maya_cmd()),
         _ => None,
     }
 }
@@ -248,7 +289,8 @@ async fn exec_matrix_cmd(cmd: Cmd, room_id: &OwnedRoomId, cfg: &MatrixCfg) -> Re
         Cmd::Tao(chapter) => send_tao(&cfg.client, room_id, &cfg.tao_deck[..], chapter).await,
         Cmd::DanseMacabre(card) => {
             send_danse_macabre(&cfg.client, room_id, card, &cfg.danse_deck).await
-        }
+        },
+        Cmd::Maya => send_maya(&cfg.client, room_id).await
     }
 }
 
@@ -346,8 +388,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .build::<ruma_client::http_client::HyperNativeTls>()
         .await?;
 
+    let user = env::var("MATRIX_USERNAME").unwrap();
+    let password = env::var("MATRIX_PASSWORD").unwrap();
+
     let session = client
-        .log_in("@spell.binder:matrix.org", "joyToTheWorld99", None, None)
+        .log_in(&user[..], &password[..], None, None)
         .await?;
 
     let local_user_id = session.user_id;
